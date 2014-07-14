@@ -1,7 +1,7 @@
 simplessh
 =========
 
-SimpleSSH is a simple wrapper around 
+SimpleSSH is a simple wrapper around go ssh and sftp libraries.
 
 License
 =======
