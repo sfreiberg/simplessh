@@ -6,6 +6,7 @@ import (
 
 	"io"
 	"io/ioutil"
+	"net"
 	"os"
 )
 
@@ -40,6 +41,8 @@ func connect(user, host string, authMethod ssh.AuthMethod) (*Client, error) {
 		User: user,
 		Auth: []ssh.AuthMethod{authMethod},
 	}
+
+	host = addPortToHost(host)
 
 	client, err := ssh.Dial("tcp", host, config)
 	if err != nil {
@@ -103,4 +106,15 @@ func (c *Client) Upload(local, remote string) error {
 
 	_, err = io.Copy(remoteFile, localFile)
 	return err
+}
+
+func addPortToHost(host string) string {
+	_, _, err := net.SplitHostPort(host)
+
+	// We got an error so blindly try to add a port number
+	if err != nil {
+		return net.JoinHostPort(host, "22")
+	}
+
+	return host
 }
