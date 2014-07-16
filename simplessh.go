@@ -8,19 +8,30 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"os/user"
+	"path/filepath"
 )
 
 type Client struct {
 	SSHClient *ssh.Client
 }
 
-func ConnectWithPassword(host, user, pass string) (*Client, error) {
+func ConnectWithPassword(host, username, pass string) (*Client, error) {
 	authMethod := ssh.Password(pass)
 
-	return connect(user, host, authMethod)
+	return connect(username, host, authMethod)
 }
 
-func ConnectWithPrivateKey(host, user, privKeyPath string) (*Client, error) {
+// Connect with a private key. If privKeyPath is an empty string it will attempt
+// to use $HOME/.ssh/id_rsa.
+func ConnectWithPrivateKey(host, username, privKeyPath string) (*Client, error) {
+	if privKeyPath == "" {
+		currentUser, err := user.Current()
+		if err == nil {
+			privKeyPath = filepath.Join(currentUser.HomeDir, ".ssh", "id_rsa")
+		}
+	}
+
 	privKey, err := ioutil.ReadFile(privKeyPath)
 	if err != nil {
 		return nil, err
@@ -33,12 +44,12 @@ func ConnectWithPrivateKey(host, user, privKeyPath string) (*Client, error) {
 
 	authMethod := ssh.PublicKeys(signer)
 
-	return connect(user, host, authMethod)
+	return connect(username, host, authMethod)
 }
 
-func connect(user, host string, authMethod ssh.AuthMethod) (*Client, error) {
+func connect(username, host string, authMethod ssh.AuthMethod) (*Client, error) {
 	config := &ssh.ClientConfig{
-		User: user,
+		User: username,
 		Auth: []ssh.AuthMethod{authMethod},
 	}
 
