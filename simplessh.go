@@ -124,6 +124,17 @@ func (c *Client) Upload(local, remote string) error {
 	return err
 }
 
+// Close the underlying SSH connection
+func (c *Client) Close() error {
+	return c.SSHClient.Close()
+}
+
+// Return an sftp client. The client needs to be closed when it's no
+// longer needed.
+func (c *Client) SFTPClient() (*sftp.Client, error) {
+	return sftp.NewClient(c.SSHClient)
+}
+
 func addPortToHost(host string) string {
 	_, _, err := net.SplitHostPort(host)
 
