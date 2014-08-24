@@ -24,7 +24,7 @@ func ConnectWithPassword(host, username, pass string) (*Client, error) {
 
 // Connect with a private key. If privKeyPath is an empty string it will attempt
 // to use $HOME/.ssh/id_rsa.
-func ConnectWithPrivateKey(host, username, privKeyPath string) (*Client, error) {
+func ConnectWithKeyFile(host, username, privKeyPath string) (*Client, error) {
 	if privKeyPath == "" {
 		currentUser, err := user.Current()
 		if err == nil {
@@ -37,7 +37,12 @@ func ConnectWithPrivateKey(host, username, privKeyPath string) (*Client, error) 
 		return nil, err
 	}
 
-	signer, err := ssh.ParsePrivateKey(privKey)
+	return ConnectWithKey(host, username, string(privKey))
+}
+
+// Connect with a private key.
+func ConnectWithKey(host, username, privKey string) (*Client, error) {
+	signer, err := ssh.ParsePrivateKey([]byte(privKey))
 	if err != nil {
 		return nil, err
 	}
