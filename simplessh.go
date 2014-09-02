@@ -124,6 +124,23 @@ func (c *Client) Upload(local, remote string) error {
 	return err
 }
 
+// Read a remote file and return the contents.
+func (c *Client) ReadAll(filepath string) ([]byte, error) {
+	sftp, err := c.SFTPClient()
+	if err != nil {
+		panic(err)
+	}
+	defer sftp.Close()
+
+	file, err := sftp.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	return ioutil.ReadAll(file)
+}
+
 // Close the underlying SSH connection
 func (c *Client) Close() error {
 	return c.SSHClient.Close()
