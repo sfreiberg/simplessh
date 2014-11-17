@@ -10,21 +10,30 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"time"
 )
+
+var DefaultTimeout = 30 * time.Second
 
 type Client struct {
 	SSHClient *ssh.Client
 }
 
+// Connect with a password.
 func ConnectWithPassword(host, username, pass string) (*Client, error) {
+	return ConnectWithPasswordTimeout(host, username, pass, DefaultTimeout)
+}
+
+// Same as ConnectWithPassword but allows a custom timeout.
+func ConnectWithPasswordTimeout(host, username, pass string, timeout time.Duration) (*Client, error) {
 	authMethod := ssh.Password(pass)
 
-	return connect(username, host, authMethod)
+	return connect(username, host, authMethod, timeout)
 }
 
 // Connect with a private key. If privKeyPath is an empty string it will attempt
 // to use $HOME/.ssh/id_rsa.
-func ConnectWithKeyFile(host, username, privKeyPath string) (*Client, error) {
+func ConnectWithKeyFileTimeout(host, username, privKeyPath string, timeout time.Duration) (*Client, error) {
 	if privKeyPath == "" {
 		currentUser, err := user.Current()
 		if err == nil {
@@ -37,11 +46,16 @@ func ConnectWithKeyFile(host, username, privKeyPath string) (*Client, error) {
 		return nil, err
 	}
 
-	return ConnectWithKey(host, username, string(privKey))
+	return ConnectWithKey(host, username, string(privKey), timeout)
+}
+
+// Same as ConnectWithKeyFile but allows a custom timeout.
+func ConnectWithKeyFile(host, username, privKeyPath string) (*Client, error) {
+	return ConnectWithKeyFileTimeout(host, username, privKeyPath, DefaultTimeout)
 }
 
 // Connect with a private key.
-func ConnectWithKey(host, username, privKey string) (*Client, error) {
+func ConnectWithKeyTimeout(host, username, privKey string, timeout time.Duration) (*Client, error) {
 	signer, err := ssh.ParsePrivateKey([]byte(privKey))
 	if err != nil {
 		return nil, err
@@ -49,10 +63,15 @@ func ConnectWithKey(host, username, privKey string) (*Client, error) {
 
 	authMethod := ssh.PublicKeys(signer)
 
-	return connect(username, host, authMethod)
+	return connect(username, host, authMethod, timeout)
 }
 
-func connect(username, host string, authMethod ssh.AuthMethod) (*Client, error) {
+// Same as ConnectWithKey but allows a custom timeout.
+func ConnectWithKey(host, username, privKey string, timeout time.Duration) (*Client, error) {
+	return ConnectWithKeyTimeout(host, username, privKey, DefaultTimeout)
+}
+
+func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Duration) (*Client, error) {
 	config := &ssh.ClientConfig{
 		User: username,
 		Auth: []ssh.AuthMethod{authMethod},
@@ -60,10 +79,15 @@ func connect(username, host string, authMethod ssh.AuthMethod) (*Client, error) 
 
 	host = addPortToHost(host)
 
-	client, err := ssh.Dial("tcp", host, config)
+	conn, err := net.DialTimeout("tcp", host, timeout)
 	if err != nil {
 		return nil, err
 	}
+	sshConn, chans, reqs, err := ssh.NewClientConn(conn, host, config)
+	if err != nil {
+		return nil, err
+	}
+	client := ssh.NewClient(sshConn, chans, reqs)
 
 	c := &Client{SSHClient: client}
 	return c, nil
