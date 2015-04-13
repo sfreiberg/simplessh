@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -19,12 +20,12 @@ type Client struct {
 	SSHClient *ssh.Client
 }
 
-// Connect with a password.
+// Connect with a password. If username is empty simplessh will attempt to get the current user.
 func ConnectWithPassword(host, username, pass string) (*Client, error) {
 	return ConnectWithPasswordTimeout(host, username, pass, DefaultTimeout)
 }
 
-// Same as ConnectWithPassword but allows a custom timeout.
+// Same as ConnectWithPassword but allows a custom timeout. If username is empty simplessh will attempt to get the current user.
 func ConnectWithPasswordTimeout(host, username, pass string, timeout time.Duration) (*Client, error) {
 	authMethod := ssh.Password(pass)
 
@@ -32,7 +33,7 @@ func ConnectWithPasswordTimeout(host, username, pass string, timeout time.Durati
 }
 
 // Connect with a private key. If privKeyPath is an empty string it will attempt
-// to use $HOME/.ssh/id_rsa.
+// to use $HOME/.ssh/id_rsa. If username is empty simplessh will attempt to get the current user.
 func ConnectWithKeyFileTimeout(host, username, privKeyPath string, timeout time.Duration) (*Client, error) {
 	if privKeyPath == "" {
 		currentUser, err := user.Current()
@@ -46,15 +47,15 @@ func ConnectWithKeyFileTimeout(host, username, privKeyPath string, timeout time.
 		return nil, err
 	}
 
-	return ConnectWithKey(host, username, string(privKey), timeout)
+	return ConnectWithKeyTimeout(host, username, string(privKey), timeout)
 }
 
-// Same as ConnectWithKeyFile but allows a custom timeout.
+// Same as ConnectWithKeyFile but allows a custom timeout. If username is empty simplessh will attempt to get the current user.
 func ConnectWithKeyFile(host, username, privKeyPath string) (*Client, error) {
 	return ConnectWithKeyFileTimeout(host, username, privKeyPath, DefaultTimeout)
 }
 
-// Connect with a private key.
+// Connect with a private key with a custom timeout. If username is empty simplessh will attempt to get the current user.
 func ConnectWithKeyTimeout(host, username, privKey string, timeout time.Duration) (*Client, error) {
 	signer, err := ssh.ParsePrivateKey([]byte(privKey))
 	if err != nil {
@@ -66,12 +67,21 @@ func ConnectWithKeyTimeout(host, username, privKey string, timeout time.Duration
 	return connect(username, host, authMethod, timeout)
 }
 
-// Same as ConnectWithKey but allows a custom timeout.
-func ConnectWithKey(host, username, privKey string, timeout time.Duration) (*Client, error) {
+// Connect with a private key. If username is empty simplessh will attempt to get the current user.
+func ConnectWithKey(host, username, privKey string) (*Client, error) {
 	return ConnectWithKeyTimeout(host, username, privKey, DefaultTimeout)
 }
 
 func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Duration) (*Client, error) {
+	if username == "" {
+		user, err := user.Current()
+		if err != nil {
+			return nil, fmt.Errorf("Username wasn't specified and couldn't get current user: %v", err)
+		}
+
+		username = user.Username
+	}
+
 	config := &ssh.ClientConfig{
 		User: username,
 		Auth: []ssh.AuthMethod{authMethod},
@@ -93,6 +103,7 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 	return c, nil
 }
 
+// Execute cmd on the remote host and return stderr and stdout
 func (c *Client) Exec(cmd string) ([]byte, error) {
 	session, err := c.SSHClient.NewSession()
 	if err != nil {

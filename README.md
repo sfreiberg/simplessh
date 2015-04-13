@@ -29,10 +29,15 @@ import (
 )
 
 func main() {
-	client, err := simplessh.ConnectWithPrivateKey("localhost:22", "root", "/home/user/.ssh/id_rsa")
+	/*
+		Leave privKeyPath empty to use $HOME/.ssh/id_rsa.
+		If username is blank simplessh will attempt to use the current user.
+	*/
+	client, err := simplessh.ConnectWithKeyFile("localhost:22", "root", "/home/user/.ssh/id_rsa")
 	if err != nil {
 		panic(err)
 	}
+	defer client.Close()
 
 	output, err := client.Exec("uptime")
 	if err != nil {
