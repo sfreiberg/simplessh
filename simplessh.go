@@ -1,9 +1,6 @@
 package simplessh
 
 import (
-	"github.com/pkg/sftp"
-	"golang.org/x/crypto/ssh"
-
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,9 +9,12 @@ import (
 	"os/user"
 	"path/filepath"
 	"time"
+
+	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
 )
 
-var DefaultTimeout = 30 * time.Second
+const DefaultTimeout = 30 * time.Second
 
 type Client struct {
 	SSHClient *ssh.Client
