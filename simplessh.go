@@ -16,6 +16,10 @@ import (
 
 const DefaultTimeout = 30 * time.Second
 
+// Set a default HostKeyCallback variable. This may not be desireable for some
+// environments.
+var HostKeyCallback = ssh.InsecureIgnoreHostKey()
+
 type Client struct {
 	SSHClient *ssh.Client
 }
@@ -83,8 +87,9 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 	}
 
 	config := &ssh.ClientConfig{
-		User: username,
-		Auth: []ssh.AuthMethod{authMethod},
+		User:            username,
+		Auth:            []ssh.AuthMethod{authMethod},
+		HostKeyCallback: HostKeyCallback,
 	}
 
 	host = addPortToHost(host)
