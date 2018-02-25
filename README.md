@@ -1,31 +1,25 @@
-simplessh
-=========
+# simplessh
+[![GoDoc](https://godoc.org/github.com/sfreiberg/simplessh?status.png)](https://godoc.org/github.com/sfreiberg/simplessh)
 
 SimpleSSH is a simple wrapper around go ssh and sftp libraries.
 
-License
-=======
+## Features
+* Multiple authentication methods (password, private key and ssh-agent)
+* Sudo support
+* Simple file upload/download support
 
-SimpleSSH is licensed under the MIT license.
-
-Installation
-============
+## Installation
 `go get github.com/sfreiberg/simplessh`
 
-Documentation
-=============
-[GoDoc](http://godoc.org/github.com/sfreiberg/simplessh)
-
-Example
-=======
+## Example
 
 ```
 package main
 
 import (
-	"github.com/sfreiberg/simplessh"
-
 	"fmt"
+	
+	"github.com/sfreiberg/simplessh"
 )
 
 func main() {
@@ -48,3 +42,6 @@ func main() {
 }
 
 ```
+
+## License
+SimpleSSH is licensed under the MIT license.
