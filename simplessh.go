@@ -105,6 +105,16 @@ func ConnectWithKey(host, username, privKey string) (*Client, error) {
 	return ConnectWithKeyTimeout(host, username, privKey, DefaultTimeout)
 }
 
+// Connect to an ssh agent with a custom timeout. If username is empty simplessh will attempt to get the current user. The windows implementation uses a different library which expects pageant to be running however it has not actually been test. If you get it working with windows please raise an issue so I can remove this disclaimer.
+func ConnectWithAgentTimeout(host, username string, timeout time.Duration) (*Client, error) {
+	return connectWithAgentTimeout(host, username, timeout)
+}
+
+// Connect to an ssh agent. If username is empty simplessh will attempt to get the current user. The windows implementation uses a different library which expects pageant to be running however it has not actually been test. If you get it working with windows please raise an issue so I can remove this disclaimer.
+func ConnectWithAgent(host, username string) (*Client, error) {
+	return ConnectWithAgentTimeout(host, username, DefaultTimeout)
+}
+
 func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Duration) (*Client, error) {
 	if username == "" {
 		user, err := user.Current()
