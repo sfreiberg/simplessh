@@ -194,6 +194,7 @@ func (c *Client) ExecSudo(cmd, passwd string) ([]byte, error) {
 	return w.b.Bytes(), err
 }
 
+// Download a file from the remote server
 func (c *Client) Download(remote, local string) error {
 	client, err := sftp.NewClient(c.SSHClient)
 	if err != nil {
@@ -217,6 +218,7 @@ func (c *Client) Download(remote, local string) error {
 	return err
 }
 
+// Upload a file to the remote server
 func (c *Client) Upload(local, remote string) error {
 	client, err := sftp.NewClient(c.SSHClient)
 	if err != nil {
@@ -237,6 +239,28 @@ func (c *Client) Upload(local, remote string) error {
 
 	_, err = io.Copy(remoteFile, localFile)
 	return err
+}
+
+// Remove a file from the remote server
+func (c *Client) Remove(path string) error {
+	client, err := sftp.NewClient(c.SSHClient)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	return client.Remove(path)
+}
+
+// Remove a directory from the remote server
+func (c *Client) RemoveDirectory(path string) error {
+	client, err := sftp.NewClient(c.SSHClient)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	return client.RemoveDirectory(path)
 }
 
 // Read a remote file and return the contents.
