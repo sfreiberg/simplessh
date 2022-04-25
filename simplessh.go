@@ -125,7 +125,25 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 		username = user.Username
 	}
 
+	sshconf := ssh.Config{
+		Ciphers: []string{
+			"arcfour128",
+			"arcfour256",
+			"arcfour",
+			"aes128-ctr",
+			"aes192-ctr",
+			"aes256-ctr",
+			"aes128-cbc",
+			"3des-cbc",
+			"des-cbc",
+
+			"aes128-gcm@openssh.com",
+			"chacha20-poly1305@openssh.com",
+		},
+	}
+
 	config := &ssh.ClientConfig{
+		Config:          sshconf,
 		User:            username,
 		Auth:            []ssh.AuthMethod{authMethod},
 		HostKeyCallback: HostKeyCallback,
