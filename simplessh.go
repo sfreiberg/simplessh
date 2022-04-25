@@ -129,6 +129,29 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 		User:            username,
 		Auth:            []ssh.AuthMethod{authMethod},
 		HostKeyCallback: HostKeyCallback,
+		HostKeyAlgorithms: []string{
+			ssh.KeyAlgoRSA,
+			ssh.KeyAlgoDSA,
+			ssh.KeyAlgoECDSA256,
+			ssh.KeyAlgoSKECDSA256,
+			ssh.KeyAlgoECDSA384,
+			ssh.KeyAlgoECDSA521,
+			ssh.KeyAlgoED25519,
+			ssh.KeyAlgoSKED25519,
+			ssh.KeyAlgoRSASHA256,
+			ssh.KeyAlgoRSASHA512,
+
+			ssh.CertAlgoRSAv01,
+			ssh.CertAlgoDSAv01,
+			ssh.CertAlgoECDSA256v01,
+			ssh.CertAlgoECDSA384v01,
+			ssh.CertAlgoECDSA521v01,
+			ssh.CertAlgoSKECDSA256v01,
+			ssh.CertAlgoED25519v01,
+			ssh.CertAlgoSKED25519v01,
+			ssh.CertAlgoRSASHA256v01,
+			ssh.CertAlgoRSASHA512v01,
+		},
 	}
 
 	host = addPortToHost(host)
