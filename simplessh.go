@@ -83,9 +83,35 @@ func ConnectWithKeyFileTimeout(host, username, privKeyPath string, timeout time.
 	return ConnectWithKeyTimeout(host, username, string(privKey), timeout)
 }
 
+// Connect with a private key with passphrase. If privKeyPath is an empty string it will attempt
+// to use $HOME/.ssh/id_rsa. If username is empty simplessh will attempt to get the current user.
+func ConnectWithKeyFilePassphraseTimeout(host, username, privKeyPath string, passPhrase string, timeout time.Duration) (*Client, error) {
+	if privKeyPath == "" {
+		currentUser, err := user.Current()
+		if err == nil {
+			privKeyPath = filepath.Join(currentUser.HomeDir, ".ssh", "id_rsa")
+		}
+	}
+	pemKey, err := ioutil.ReadFile(privKeyPath)
+	if err != nil {
+		return nil, err
+	}
+	signer, err := ssh.ParsePrivateKeyWithPassphrase(pemKey, []byte(passPhrase))
+	if err != nil {
+		return nil, err
+	}
+
+	return ConnectWithKeyPassphraseTimeout(host, username, signer, timeout)
+}
+
 // Same as ConnectWithKeyFile but allows a custom timeout. If username is empty simplessh will attempt to get the current user.
 func ConnectWithKeyFile(host, username, privKeyPath string) (*Client, error) {
 	return ConnectWithKeyFileTimeout(host, username, privKeyPath, DefaultTimeout)
+}
+
+// KeyFile with a passphrase
+func ConnectWithKeyFilePassphrase(host, username, privKeyPath string, passPhrase string) (*Client, error) {
+	return ConnectWithKeyFilePassphraseTimeout(host, username, privKeyPath, passPhrase, DefaultTimeout)
 }
 
 // Connect with a private key with a custom timeout. If username is empty simplessh will attempt to get the current user.
@@ -95,6 +121,13 @@ func ConnectWithKeyTimeout(host, username, privKey string, timeout time.Duration
 		return nil, err
 	}
 
+	authMethod := ssh.PublicKeys(signer)
+
+	return connect(username, host, authMethod, timeout)
+}
+
+// Connect with a private key with passphrase with a custom timeout. If username is empty simplessh will attempt to get the current user.
+func ConnectWithKeyPassphraseTimeout(host, username string, signer ssh.Signer, timeout time.Duration) (*Client, error) {
 	authMethod := ssh.PublicKeys(signer)
 
 	return connect(username, host, authMethod, timeout)
