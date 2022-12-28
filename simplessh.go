@@ -83,6 +83,36 @@ func ConnectWithKeyFileTimeout(host, username, privKeyPath string, timeout time.
 	return ConnectWithKeyTimeout(host, username, string(privKey), timeout)
 }
 
+// Connect with a certificate file.
+// If privKeyPath is an empty string it will attempt to use $HOME/.ssh/id_rsa.
+// If pubCertPath is an empty string it will attempt to use $HOME/.ssh/id_rsa-cert.pub.
+// If username is empty simplessh will attempt to get the current user.
+func ConnectWithCertFile(host, username, privKeyPath, pubCertPath string) (*Client, error) {
+	if privKeyPath == "" {
+		currentUser, err := user.Current()
+		if err == nil {
+			privKeyPath = filepath.Join(currentUser.HomeDir, ".ssh", "id_rsa")
+		}
+	}
+	if pubCertPath == "" {
+		currentUser, err := user.Current()
+		if err == nil {
+			privKeyPath = filepath.Join(currentUser.HomeDir, ".ssh", "id_rsa-cert.pub")
+		}
+	}
+
+	privKey, err := ioutil.ReadFile(privKeyPath)
+	if err != nil {
+		return nil, err
+	}
+	pubCert, err := ioutil.ReadFile(pubCertPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return ConnectWithCertTimeout(host, username, string(privKey), string(pubCert), DefaultTimeout)
+}
+
 // Connect with a private key with passphrase. If privKeyPath is an empty string it will attempt
 // to use $HOME/.ssh/id_rsa. If username is empty simplessh will attempt to get the current user.
 func ConnectWithKeyFilePassphraseTimeout(host, username, privKeyPath string, passPhrase string, timeout time.Duration) (*Client, error) {
@@ -122,6 +152,28 @@ func ConnectWithKeyTimeout(host, username, privKey string, timeout time.Duration
 	}
 
 	authMethod := ssh.PublicKeys(signer)
+
+	return connect(username, host, authMethod, timeout)
+}
+
+// Connect with a certificate with a custom timeout. If username is empty simplessh will attempt to get the current user.
+func ConnectWithCertTimeout(host, username, privKey, pubCert string, timeout time.Duration) (*Client, error) {
+	signer, err := ssh.ParsePrivateKey([]byte(privKey))
+	if err != nil {
+		return nil, err
+	}
+
+	cert, _, _, _, err := ssh.ParseAuthorizedKey([]byte(pubCert))
+	if err != nil {
+		return nil, err
+	}
+
+	certSigner, err := ssh.NewCertSigner(cert.(*ssh.Certificate), signer)
+	if err != nil {
+		return nil, err
+	}
+
+	authMethod := ssh.PublicKeys(certSigner)
 
 	return connect(username, host, authMethod, timeout)
 }

@@ -4,7 +4,7 @@
 SimpleSSH is a simple wrapper around go ssh and sftp libraries.
 
 ## Features
-* Multiple authentication methods (password, private key and ssh-agent)
+* Multiple authentication methods (password, private key, certificate and ssh-agent)
 * Sudo support
 * Simple file upload/download support
 
