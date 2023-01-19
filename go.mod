@@ -1,4 +1,4 @@
-module github.com/scaredos/simplessh-unsecure
+module github.com/scaredos/simplessh
 
 go 1.18
 
