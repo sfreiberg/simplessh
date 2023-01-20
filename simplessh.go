@@ -198,8 +198,6 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 			ssh.KeyAlgoSKED25519,
 			ssh.KeyAlgoRSASHA256,
 			ssh.KeyAlgoRSASHA512,
-			ssh.KeyAlgoDH1SHA1,
-			ssh.KeyAlgoDH14SHA1,
 
 			ssh.CertAlgoRSAv01,
 			ssh.CertAlgoDSAv01,
