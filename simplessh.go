@@ -174,6 +174,11 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 			"chacha20-poly1305@openssh.com",
 		},
 		KeyExchanges: []string{
+			"curve25519-sha256",
+			"curve25519-sha256@libssh.org",
+			"diffie-hellman-group-exchange-sha1",
+			"diffie-hellman-group-exchange-sha256",
+			"diffie-hellman-group14-sha256",
 			"diffie-hellman-group1-sha1",
 			"diffie-hellman-group14-sha1",
 			"diffie-hellman-group-sha256",
