@@ -173,6 +173,13 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 			"aes128-gcm@openssh.com",
 			"chacha20-poly1305@openssh.com",
 		},
+		KeyExchanges: []string{
+			"diffie-hellman-group1-sha1",
+			"diffie-hellman-group14-sha1",
+			"diffie-hellman-group-sha256",
+			"rsa-sha2-512",
+			"rsa-sha2-256",
+			"ssh-rsa",
 	}
 
 	config := &ssh.ClientConfig{
