@@ -180,6 +180,7 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 			"rsa-sha2-512",
 			"rsa-sha2-256",
 			"ssh-rsa",
+		},
 	}
 
 	config := &ssh.ClientConfig{
