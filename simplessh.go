@@ -238,14 +238,14 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 func (c *Client) ExecMulti(cmd []string) (string, error) {
 	session, err := c.SSHClient.NewSession()
 	if err != nil {
-		return nil, err
+		return "error", err
 	}
 	
 	defer session.Close()
 	
 	w, err := session.StdinPipe()
 	if err != nil {
-		return nil, err
+		return "error", err
 	}
 	
 	var stdoutBuf bytes.Buffer
