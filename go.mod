@@ -1,4 +1,4 @@
-module github.com/sfreiberg/simplessh
+module github.com/scaredos/simplessh
 
 go 1.18
 
