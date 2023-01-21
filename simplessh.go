@@ -234,6 +234,30 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 	return c, nil
 }
 
+// Execute an array of commands within the same shell and return stderr and stdout
+func (c *Client) ExecMulti(cmd []string) (string, error) {
+	session, err := c.SSHClient.NewSession()
+	if err != nil {
+		return nil, err
+	}
+	
+	defer session.Close()
+	
+	w, err := session.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+	
+	var stdoutBuf bytes.Buffer
+	session.Stdout = &stdoutBuf
+	
+	err = session.Shell()
+	for i, _ := range cmd {
+		w.Write([]byte(fmt.Sprintf("%s\n", cmd[i]))
+	}
+	return stdoutBuf.String(), nil
+}
+
 // Execute cmd on the remote host and return stderr and stdout
 func (c *Client) Exec(cmd string) ([]byte, error) {
 	session, err := c.SSHClient.NewSession()
