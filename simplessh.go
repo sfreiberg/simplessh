@@ -253,7 +253,7 @@ func (c *Client) ExecMulti(cmd []string) (string, error) {
 	
 	err = session.Shell()
 	for i, _ := range cmd {
-		w.Write([]byte(fmt.Sprintf("%s\n", cmd[i]))
+		w.Write([]byte(fmt.Sprintf("%s\n", cmd[i])))
 	}
 	return stdoutBuf.String(), nil
 }
