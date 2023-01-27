@@ -255,10 +255,11 @@ func (c *Client) ExecMulti(cmd []string) (string, error) {
 	
 	err = session.Shell()
 	for i, _ := range cmd {
+		// go io.Copy(w, fmt.Sprintf("%s\n", cmd[i]))
 		w.Write([]byte(fmt.Sprintf("%s\n", cmd[i])))
 		go io.Copy(os.Stdout, stdout)
 	}
-	return "done", nil
+	return "finished executing multiple commands", nil
 }
 
 // Execute cmd on the remote host and return stderr and stdout
