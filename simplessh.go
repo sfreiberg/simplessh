@@ -164,10 +164,12 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 			"arcfour256",
 			"arcfour",
 			"aes128-ctr",
+			"aes128-cbc", // Cisco
 			"aes192-ctr",
+			"aes192-cbc", // Cisco
 			"aes256-ctr",
-			"aes128-cbc",
-			"3des-cbc",
+			"aes256-cbc", // Cisco
+			"3des-cbc", // Cisco
 			"des-cbc",
 
 			"aes128-gcm@openssh.com",
