@@ -1,6 +1,7 @@
 package simplessh
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -232,6 +233,31 @@ func (c *Client) Exec(cmd string) ([]byte, error) {
 	return session.CombinedOutput(cmd)
 }
 
+// Execute cmd on the remote host and return combined stderr and stdout in
+// real time
+func (c *Client) ExecStream(cmd string, stdout io.Writer) error {
+	session, err := c.SSHClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	sessOut, err := session.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	sessErr, err := session.StderrPipe()
+	if err != nil {
+		return err
+	}
+
+	go streamOutput(sessOut, stdout)
+	go streamOutput(sessErr, stdout)
+
+	return session.Run(cmd)
+}
+
 // Execute cmd via sudo. Do not include the sudo command in
 // the cmd string. For example: Client.ExecSudo("uptime", "password").
 // If you are using passwordless sudo you can use the regular Exec()
@@ -374,4 +400,27 @@ func addPortToHost(host string) string {
 	}
 
 	return host
+}
+
+func streamOutput(read io.Reader, write io.Writer) {
+	var (
+		r    = bufio.NewReader(read)
+		line = ""
+	)
+
+	for {
+		b, err := r.ReadByte()
+		if err != nil {
+			break
+		}
+
+		if b == byte('\n') {
+			fmt.Fprintln(write, line)
+			line = ""
+
+			continue
+		}
+
+		line += string(b)
+	}
 }
