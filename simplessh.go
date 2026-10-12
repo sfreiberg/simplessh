@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"net"
 	"os"
 	"os/user"
+	"path"
 	"path/filepath"
 	"sync"
 	"time"
@@ -300,6 +302,62 @@ func (c *Client) Upload(local, remote string) error {
 	}
 	defer client.Close()
 
+	return uploadFile(client, local, remote)
+}
+
+// Upload a directory and its contents to the remote server. The remote
+// directory is created if it doesn't exist and file permissions are
+// preserved. Symbolic links are skipped.
+func (c *Client) UploadDir(local, remote string) error {
+	client, err := sftp.NewClient(c.SSHClient)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	return uploadDir(client, local, remote)
+}
+
+func uploadDir(client *sftp.Client, local, remote string) error {
+	return filepath.WalkDir(local, func(localPath string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		rel, err := filepath.Rel(local, localPath)
+		if err != nil {
+			return err
+		}
+		// Remote paths always use forward slashes
+		remotePath := path.Join(remote, filepath.ToSlash(rel))
+
+		switch {
+		case d.IsDir():
+			info, err := d.Info()
+			if err != nil {
+				return err
+			}
+			if err := client.MkdirAll(remotePath); err != nil {
+				return err
+			}
+			return client.Chmod(remotePath, info.Mode().Perm())
+		case d.Type().IsRegular():
+			info, err := d.Info()
+			if err != nil {
+				return err
+			}
+			if err := uploadFile(client, localPath, remotePath); err != nil {
+				return err
+			}
+			return client.Chmod(remotePath, info.Mode().Perm())
+		default:
+			// Skip symlinks, devices, sockets, etc.
+			return nil
+		}
+	})
+}
+
+func uploadFile(client *sftp.Client, local, remote string) error {
 	localFile, err := os.Open(local)
 	if err != nil {
 		return err
@@ -311,8 +369,11 @@ func (c *Client) Upload(local, remote string) error {
 		return err
 	}
 
-	_, err = io.Copy(remoteFile, localFile)
-	return err
+	if _, err := io.Copy(remoteFile, localFile); err != nil {
+		remoteFile.Close()
+		return err
+	}
+	return remoteFile.Close()
 }
 
 // Remove a file from the remote server
