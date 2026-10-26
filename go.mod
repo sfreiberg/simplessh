@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/davidmz/go-pageant v1.0.2
-	github.com/pkg/sftp v1.13.11
+	github.com/pkg/sftp v1.13.12
 	golang.org/x/crypto v0.58.0
 )
 

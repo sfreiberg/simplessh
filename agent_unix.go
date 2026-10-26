@@ -1,5 +1,4 @@
 //go:build !windows
-// +build !windows
 
 package simplessh
 
@@ -18,6 +17,8 @@ func connectWithAgentTimeout(host, username string, timeout time.Duration) (*Cli
 	if err != nil {
 		return nil, err
 	}
+	// The agent is only needed for authentication during connect.
+	defer sshAgent.Close()
 
 	authMethod := ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
 

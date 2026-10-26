@@ -213,8 +213,26 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 	if err != nil {
 		return nil, err
 	}
+
+	// The dial timeout doesn't cover the SSH handshake, so bound that too;
+	// otherwise a server that accepts the connection but never completes
+	// the handshake blocks forever.
+	if timeout > 0 {
+		if err := conn.SetDeadline(time.Now().Add(timeout)); err != nil {
+			conn.Close()
+			return nil, err
+		}
+	}
+
+	// NewClientConn closes conn if the handshake fails.
 	sshConn, chans, reqs, err := ssh.NewClientConn(conn, host, config)
 	if err != nil {
+		return nil, err
+	}
+
+	// Clear the handshake deadline for the life of the connection.
+	if err := conn.SetDeadline(time.Time{}); err != nil {
+		sshConn.Close()
 		return nil, err
 	}
 	client := ssh.NewClient(sshConn, chans, reqs)
@@ -288,10 +306,13 @@ func (c *Client) Download(remote, local string) error {
 	if err != nil {
 		return err
 	}
-	defer localFile.Close()
 
-	_, err = io.Copy(localFile, remoteFile)
-	return err
+	if _, err := io.Copy(localFile, remoteFile); err != nil {
+		localFile.Close()
+		return err
+	}
+	// Close can report a failed write, so don't ignore it.
+	return localFile.Close()
 }
 
 // Upload a file to the remote server
@@ -402,7 +423,7 @@ func (c *Client) RemoveDirectory(path string) error {
 func (c *Client) ReadAll(filepath string) ([]byte, error) {
 	sftp, err := c.SFTPClient()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer sftp.Close()
 
