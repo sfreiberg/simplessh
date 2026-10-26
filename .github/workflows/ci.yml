@@ -5,13 +5,16 @@ on:
     branches: [master]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
@@ -23,6 +26,12 @@ jobs:
             echo "$unformatted"
             exit 1
           fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Modernize
+        run: go run golang.org/x/tools/go/analysis/passes/modernize/cmd/modernize@v0.52.0 -test ./...
 
       - name: Test
         run: go test -race ./...
